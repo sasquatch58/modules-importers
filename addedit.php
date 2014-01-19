@@ -17,9 +17,9 @@ $maxFileSize = substr(ini_get('memory_limit'), 0, strlen(ini_get('memory_limit')
 
 ?>
 <form enctype="multipart/form-data" action="index.php?m=importers" method="post">
-	<input type="hidden" name="dosql" value="do_importer_aed" />
-	<input type="hidden" name="MAX_FILE_SIZE" value="<?php echo $maxFileSize; ?>" />
-	<input type="hidden" name="action" value="import" />
-	<input type="file" name="upload_file" size="60" />
-	<input type="submit" name="submit" value="<?php echo $AppUI->_("Import Data"); ?>" class="button" />
+	<input type="hidden" name="dosql" value="do_importer_aed">
+	<input type="hidden" name="MAX_FILE_SIZE" value="<?php echo $maxFileSize; ?>">
+	<input type="hidden" name="action" value="import">
+	<input type="file" name="upload_file" size="60">
+	<input type="submit" name="submit" value="<?php echo $AppUI->_("Import Data"); ?>" class="button">
 </form>

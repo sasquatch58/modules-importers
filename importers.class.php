@@ -59,7 +59,7 @@ class CImporter {
 	 * The individual subclasses should extend this function to handle the
 	 *   custom bits of the import process.
 	 */
-	protected function _import(CAppUI $AppUI, array $fields) {
+	protected function _import(w2p_Core_CAppUI $AppUI, array $fields) {
 
         $this->company_id = (int) w2PgetParam($fields, 'company_id', 0);
         if ($this->company_id == 0) {
@@ -152,7 +152,7 @@ class CImporter {
         $q->exec();
     }
 
-    protected function _processContact(CAppUI $AppUI, $username, $company_id) {
+    protected function _processContact(w2p_Core_CAppUI $AppUI, $username, $company_id) {
         $space = strrpos($username, ' ');
         if ($space === false) {
             $first_name = $username;
@@ -183,7 +183,7 @@ class CImporter {
         return $contact_id;
     }
 
-    protected function _processTask(CAppUI $AppUI, $project_id, $task) {
+    protected function _processTask(w2p_Core_CAppUI $AppUI, $project_id, $task) {
         $myTask = new CTask;
         $myTask->task_name = w2PgetCleanParam($task, 'task_name', null);
         $myTask->task_project = $project_id;
@@ -202,7 +202,7 @@ class CImporter {
         return (is_array($result)) ? $result : $myTask->task_id;
     }
 
-    protected function _processProject(CAppUI $AppUI, $company_id, $projectInfo) {
+    protected function _processProject(w2p_Core_CAppUI $AppUI, $company_id, $projectInfo) {
 
         $projectName = w2PgetParam( $projectInfo, 'new_project', 'New Project' );
         $projectStartDate = w2PgetParam( $projectInfo, 'project_start_date', 'New Project' );
@@ -230,7 +230,7 @@ class CImporter {
         return (is_array($result)) ? $result : $project->project_id;
     }
 
-	protected function _formatDate(CAppUI $AppUI, $dateString) {
+	protected function _formatDate(w2p_Core_CAppUI $AppUI, $dateString) {
 		$dateString = str_replace('-', '', $dateString);
 		$dateString = str_replace(':', '', $dateString);
 		$dateString = str_replace('T', '', $dateString);

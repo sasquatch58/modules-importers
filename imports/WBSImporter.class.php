@@ -15,7 +15,7 @@ class WBSImporter extends CImporter {
 	 *   so we could test it more easily.
 	 *   dkc - 15 April 2011
 	 */
-    public function import(CAppUI $AppUI, array $fields) {
+    public function import(w2p_Core_CAppUI $AppUI, array $fields) {
 
 		parent::_import($AppUI, $fields);
 
@@ -34,7 +34,6 @@ class WBSImporter extends CImporter {
 						$q->addTable('users');
 						$q->exec();
 						$insert_id = db_insert_id();
-
 						$r['user_id'] = $insert_id;
                     } else {
 //TODO:  This error message doesn't make it through..
@@ -124,7 +123,7 @@ class WBSImporter extends CImporter {
         return true;
     }
 
-    public function view(CAppUI $AppUI) {
+    public function view(w2p_Core_CAppUI $AppUI) {
         /*
 		 * The whole view is based on the SimpleXML. It was a easier decision 
 		 *   to get atributes from the wbs files and it actually worked! I 

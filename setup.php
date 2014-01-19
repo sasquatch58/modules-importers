@@ -13,15 +13,21 @@ if (!defined('W2P_BASE_DIR'))
  */
 
 $config = array();
-$config['mod_name']        = 'Project Importer';
-$config['mod_version']     = '4.2';
-$config['mod_directory']   = 'importers';               // the module path
-$config['mod_setup_class'] = 'CSetupProjectImporter';   // the name of the setup class
-$config['mod_type']        = 'user';                    // 'core' for modules distributed with w2p itself, 'user' for addon modules
-$config['mod_ui_name']	   = $config['mod_name'];       // the name that is shown in the main menu of the User Interface
-$config['mod_ui_icon']     = 'projectimporter.png';     // name of a related icon
-$config['mod_description'] = 'Import various XML formats';
-$config['mod_main_class']  = 'CImporter';
+$config['mod_name']        						= 'Project Importer';
+$config['mod_version']     						= '4.2';
+$config['mod_directory']   						= 'importers';               // the module path
+$config['mod_setup_class'] 						= 'CSetupProjectImporter';   // the name of the setup class
+$config['mod_type']        						= 'user';                    // 'core' for modules distributed with w2p itself, 'user' for addon modules
+$config['mod_ui_name']	   						= $config['mod_name'];       // the name that is shown in the main menu of the User Interface
+$config['mod_ui_icon']     						= 'projectimporter.png';     // name of a related icon
+$config['mod_description'] 						= 'Import various XML formats';
+$config['mod_main_class']  						= 'CImporter';
+//$config['permissions_item_table'] = 'importers';
+//$config['permissions_item_field'] = '';
+//$config['permissions_item_label'] = '';
+$config['requirements'] = array(
+		array('require' => 'web2project',   'comparator' => '>=', 'version' => '3')
+);
 
 if (@$a == 'setup') {
 	echo w2PshowModuleConfig( $config );
@@ -29,25 +35,23 @@ if (@$a == 'setup') {
 
 class CSetupProjectImporter {
 
-    public function configure() {
-		return true;	
+	public function install() {
+		$result = $this->_checkRequirements();
+			if (!$result) {
+			return false;
+		}
+		return parent::install();
 	}
-
-    public function remove() {
-		global $AppUI;
-
-        $perms = $AppUI->acl();
-        return $perms->unregisterModule('importers');
+	
+    public function configure() {
+		return false;	
 	}
 
     public function upgrade($old_version) {
-        return true;
+        return false;
 	}
-
-    public function install() {
-        global $AppUI;
-
-        $perms = $AppUI->acl();
-        return $perms->registerModule('Project Importer', 'importers');
+	
+	public function remove() {
+		return parent::remove();
 	}
 }

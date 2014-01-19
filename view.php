@@ -12,15 +12,15 @@ if (is_null($importer)) {
 	$AppUI->redirect('m=importers');
 }
 
-$titleBlock = new CTitleBlock($AppUI->_('Project Importer'), 'projectimporter.png', $m, "$m.$a");
+$titleBlock = new w2p_Theme_TitleBlock($AppUI->_('Project Importer'), 'projectimporter.png', $m, $m . ',' . $a);
 $titleBlock->show();
 
 $AppUI->addFooterJavascriptFile('modules/importers/view.js');
 ?>
 <form name="preForm" action="?m=importers" method="post">
 	<input type="hidden" name="action" value="save">
-	<input type="hidden" name="dosql" value="do_importer_aed" />
-	<input type="hidden" name="filetype" value="<? echo $importer->fileType;?>">
+	<input type="hidden" name="dosql" value="do_importer_aed">
+	<input type="hidden" name="filetype" value="<?php echo $importer->fileType;?>">
 
 	<table cellspacing="1" cellpadding="1" border="0" width='100%' class="std">
 		<tr>
@@ -30,8 +30,8 @@ $AppUI->addFooterJavascriptFile('modules/importers/view.js');
 		</tr>
 		<tr>
 			<td>
-				<input type="submit" class="text" name="submit" value="<? echo $AppUI->_('Import');?>" onClick="validateImport(); return false;">
-				<input type="submit" class="text" name="submit" value="<? echo $AppUI->_('cancel');?>" onClick="this.form.action.value='cancel'">
+				<input type="submit" class="text" name="submit" value="<?php echo $AppUI->_('Import');?>" onClick="validateImport(); return false;">
+				<input type="submit" class="text" name="submit" value="<?php echo $AppUI->_('cancel');?>" onClick="this.form.action.value='cancel'">
 			</td>
 		</tr>
 	</table>

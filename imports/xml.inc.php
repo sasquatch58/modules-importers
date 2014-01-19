@@ -5,6 +5,7 @@ if (!defined('W2P_BASE_DIR')){
 
 //TODO:  This is the php4 way of parsing XML.  All of these functions should 
 //   should be replaced with SimpleXML.
+//   check php5 compatibility
 
 global $stack;
 global $reset;
