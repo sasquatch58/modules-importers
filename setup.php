@@ -35,7 +35,7 @@ if (@$a == 'setup') {
 
 class CSetupProjectImporter extends w2p_System_Setup {
 	public function install() {
-		$result = $this->_checkRequirements();
+		$result = $this->_meetsRequirements();
 			if (!$result) {
 			return false;
 		}
