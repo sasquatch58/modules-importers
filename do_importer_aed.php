@@ -14,7 +14,7 @@ switch($action) {
 		}
 
 		$fileext = substr($_FILES['upload_file']['name'], -4);
-		$importer = CImporter::resolveFiletype($fileext);
+		$importer = CImporter::resolveFiletype($fileext, $AppUI);
 
 		if (is_a($importer, 'stdClass')) {
 			$AppUI->setMsg('Failure: '.$AppUI->_($importer->error), UI_MSG_ERROR, true);
@@ -26,7 +26,7 @@ switch($action) {
 		$AppUI->redirect('m=importers&a=view');
 		break;
 	case 'save':
-        $importer = CImporter::resolveFiletype($_POST['filetype']);
+        $importer = CImporter::resolveFiletype($_POST['filetype'], $AppUI);
 
 //TODO: this branch still has to be cleaned up
         $importer->import($AppUI, $_POST);

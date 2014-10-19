@@ -3,7 +3,11 @@ if (!defined('W2P_BASE_DIR')){
   die('You should not access this file directly.');
 }
 
-class CImporter {
+class CImporter
+{
+    protected $AppUI = null;
+    protected $company_id = 0;
+
     public $fileType = '';
     public $importType='';
     public $project_id = 0;
@@ -14,18 +18,24 @@ class CImporter {
     protected $proName='';
     protected $user_control='';
 
-    public static function resolveFiletype($filetype = '') {
+    public function __construct(w2p_Core_CAppUI $AppUI = null)
+    {
+        $this->AppUI = $AppUI;
+    }
+
+    public static function resolveFiletype($filetype, $AppUI) {
+//TODO: rename these importer classes so we can count on our autoloader instead of explicit includes
         include_once 'imports/MSProjectImporter.class.php';
         /* Added by Wellison da Rocha Pereira, credited in license.txt */
         include_once 'imports/WBSImporter.class.php';
 
         switch($filetype) {
             case '.wbs':
-                $importer = new WBSImporter();
+                $importer = new WBSImporter($AppUI);
                 $importer->fileType = '.wbs';
                 break;
             case '.xml':
-                $importer = new MSProjectImporter();
+                $importer = new MSProjectImporter($AppUI);
                 $importer->fileType = '.xml';
 				break;
             default:
@@ -59,57 +69,46 @@ class CImporter {
 	 * The individual subclasses should extend this function to handle the
 	 *   custom bits of the import process.
 	 */
-	protected function _import(w2p_Core_CAppUI $AppUI, array $fields) {
+	protected function _import(w2p_Core_CAppUI $AppUI, array $fields)
+    {
+        $this->company_id = (int) w2PgetParam($fields, 'company_id', $AppUI->user_company);
 
-        $this->company_id = (int) w2PgetParam($fields, 'company_id', 0);
-        if ($this->company_id == 0) {
-            if (isset($fields['new_company'])) {
-                $companyName = w2PgetParam( $fields, 'new_company', 'New Company');
-                $company = new CCompany();
-                $company->company_name = $companyName;
-                $company->company_owner = $AppUI->user_id;
-                $company->store($AppUI);
-                $this->company_id = $company->company_id;
-
-                //$output .= $AppUI->_('createcomp'). $companyName . '<br>';
-//TODO: replace this echo with a good status message
-                //echo $output;
-            } else {
-                $error = $AppUI->_('emptycomp');
-//TODO: process this error correctly
-                //return $error;
-            }
+        if (!$fields['company_id'] && '' != $fields['company_name']) {
+            $company = new CCompany();
+            $company->bind($fields);
+            $company->store();
+            $this->company_id = $company->company_id;
         }
 
-        $result = $this->_processProject($AppUI, $this->company_id, $fields);
-        if (is_array($result)) {
-            $AppUI->setMsg($result, UI_MSG_ERROR);
-//TODO: this should probably delete the project and/or company.. just in case
-            $AppUI->redirect('m=importers');
+        $project = $this->_processProject($AppUI, $this->company_id, $fields);
+
+        if (!$project->project_id) {
+            $this->AppUI->setMsg($project->getError(), UI_MSG_ERROR);
+            $this->AppUI->redirect('m=importers');
         }
-        $this->project_id = $result;
+        $this->project_id = $project->project_id;
 	}
 
-    protected function _createCompanySelection($AppUI, $companyInput) {
+    protected function _createCompanySelection(w2p_Core_CAppUI $AppUI, $companyInput) {
         $company = new CCompany();
-        $companyMatches = $company->getCompanyList($AppUI, -1, $companyInput);
-        $company_id = (count($companyMatches) == 1) ? $companyMatches[0]['company_id'] : $AppUI->user_company;
-        $companies = $company->getAllowedRecords($AppUI->user_id, 'company_id,company_name', 'company_name');
-        $companies = arrayMerge(array('0' => $AppUI->_('Add New Company')), $companies);
+        $companyMatches = $company->getCompanyList($this->AppUI, -1, $companyInput);
+        $company_id = (count($companyMatches) == 1) ? $companyMatches[0]['company_id'] : $this->AppUI->user_company;
+        $companies = $company->getAllowedRecords($this->AppUI->user_id, 'company_id,company_name', 'company_name');
+        $companies = arrayMerge(array('0' => $this->AppUI->_('Add New Company')), $companies);
 
         $output .= '<td>' .
-            arraySelect($companies, 'company_id', 'class="text" size="1" onChange=this.form.new_company.value=\'\'', $company_id) .
-            '<input type="text" name="new_company" value="' . (($company_id > 0) ? '' : $companyInput) . '" class="text" />';
+            arraySelect($companies, 'company_id', 'class="text" size="1" onChange=this.form.company_name.value=\'\'', $company_id) .
+            '<input type="text" name="company_name" value="' . (($company_id > 0) ? '' : $companyInput) . '" class="text" />';
         if ($company_id == 0) {
-            $output .= '<br /><em>'.$AppUI->_('compinfo').'</em>';
+            $output .= '<br /><em>'.$this->AppUI->_('compinfo').'</em>';
         }
         $output .= '</td></tr>';
 
         return $output;
     }
 
-    protected function _createProjectSelection($AppUI, $project_name) {
-        $output .= '<tr><td align="right">' . $AppUI->_('Project Name') . ':</td>';
+    protected function _createProjectSelection(w2p_Core_CAppUI $AppUI, $project_name) {
+        $output .= '<tr><td align="right">' . $this->AppUI->_('Project Name') . ':</td>';
         $q = new w2p_Database_Query();
         $q->addQuery('project_id');
         $q->addTable('projects');
@@ -117,10 +116,10 @@ class CImporter {
         $project_id = $q->loadResult();
 
         $output .= '<td>';
-        $output .= '<input type="text" name="new_project" value="' . $project_name . '" size="36" class="text" />';
+        $output .= '<input type="text" name="project_name" value="' . $project_name . '" size="36" class="text" />';
         if ($project_id) {
             $output .= '<input type="hidden" name="project_id" value="' . $project_id . '" />';
-            $output .= $AppUI->_('pexist') ;
+            $output .= $this->AppUI->_('pexist') ;
         }
         $output .= '</td></tr>';
 
@@ -174,9 +173,9 @@ class CImporter {
 			$contact->contact_last_name = ucwords($last_name);
 			$contact->contact_display_name = $contact->contact_first_name.' '.$contact->contact_last_name;
 			$contact->contact_order_by = $username;
-			$contact->contact_owner = $AppUI->user_id;
+			$contact->contact_owner = $this->AppUI->user_id;
 			$contact->contact_company = $company_id;
-			$result = $contact->store($AppUI);
+			$result = $contact->store($this->AppUI);
 			$contact_id = $contact->contact_id;
 		}
 
@@ -188,8 +187,8 @@ class CImporter {
         $myTask->task_name = w2PgetParam($task, 'task_name', null);
         $myTask->task_project = $project_id;
         $myTask->task_description = w2PgetParam($task, 'task_description', '');
-        $myTask->task_start_date = $AppUI->convertToSystemTZ($task['task_start_date']);
-		$myTask->task_end_date = $AppUI->convertToSystemTZ($task['task_end_date']);
+        $myTask->task_start_date = $this->AppUI->convertToSystemTZ($task['task_start_date']);
+		$myTask->task_end_date = $this->AppUI->convertToSystemTZ($task['task_end_date']);
         $myTask->task_duration = $task['task_duration'];
         $myTask->task_milestone = (int) $task['task_milestone'];
         $myTask->task_owner = (int) $task['task_owner'];
@@ -197,40 +196,25 @@ class CImporter {
         $myTask->task_priority = (int) $task['task_priority'];
         $myTask->task_percent_complete = $task['task_percent_complete'];
         $myTask->task_duration_type = $task['task_duration_type'];
-        $result = $myTask->store($AppUI);
+        $result = $myTask->store($this->AppUI);
 
         return (is_array($result)) ? $result : $myTask->task_id;
     }
 
-    protected function _processProject(w2p_Core_CAppUI $AppUI, $company_id, $projectInfo) {
-
-        $projectName = w2PgetParam( $projectInfo, 'new_project', 'New Project' );
-        $projectStartDate = w2PgetParam( $projectInfo, 'project_start_date', 'New Project' );
-        $projectEndDate = w2PgetParam( $projectInfo, 'project_end_date', 'New Project' );
-        $projectOwner = w2PgetParam( $projectInfo, 'project_owner', $AppUI->user_id );
-        $projectStatus = w2PgetParam( $projectInfo, 'project_status', 0 );
-
+    protected function _processProject(w2p_Core_CAppUI $AppUI, $company_id, $projectInfo)
+    {
+        unset($projectInfo['project_id']);
         $project = new CProject;
-        $project->project_name = $projectName;
-        $project->project_short_name = substr($projectName, 0, 8);
-        $project->project_company = $company_id;
-        $project->project_start_date = $AppUI->convertToSystemTZ($projectStartDate);
-        $project->project_end_date = $AppUI->convertToSystemTZ($projectEndDate);
-        $project->project_owner = $projectOwner;
-        $project->project_creator = $AppUI->user_id;
-        $project->project_status = $projectStatus;
+        $project->bind($projectInfo);
+        $project->project_company = $this->company_id;
         $project->project_active = 1;
-        $project->project_priority = '0';
-        $project->project_type = '0';
         $project->project_color_identifier = 'FFFFFF';
-        $project->project_parent = null;
-        $project->project_original_parent = null;
-        $result = $project->store($AppUI);
+        $project->store();
 
-        return (is_array($result)) ? $result : $project->project_id;
+        return $project;
     }
 
-	protected function _formatDate(w2p_Core_CAppUI $AppUI, $dateString) {
+	protected function _formatDate($notUsed, $dateString) {
 		$dateString = str_replace('-', '', $dateString);
 		$dateString = str_replace(':', '', $dateString);
 		$dateString = str_replace('T', '', $dateString);
